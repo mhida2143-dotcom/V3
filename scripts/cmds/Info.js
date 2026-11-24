@@ -23,11 +23,11 @@ module.exports = {
   onStart: async function ({ message }) {
 
     // 👑 OWNER INFO
-    const authorName = "×᷼×ＭＡＭＵＮ☆";
+    const authorName = "×᷼×MOJAHAID☆";
     const ownAge = "21+";
     const messenger = "https://m.me/xdi404";
-    const authorFB = "Mohammad Mamun";
-    const authorNumber = "+8801830981279";
+    const authorFB = "MOja haid";
+    const authorNumber = "01607091537";
     const status = "Single";
 
     // 🇧🇩 BANGLADESH TIME
