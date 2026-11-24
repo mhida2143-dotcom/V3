@@ -1,79 +1,120 @@
 const fs = require("fs-extra");
-const request = require("request");
+const https = require("https");
 const path = require("path");
-const os = require("os");
 
 module.exports = {
-	config: {
-		name: "owner",
-		version: "3.0",
-		author: "亗•𝘔𝘈𝘔𝘜𝘕✿᭄",
-		role: 0,
-		shortDescription: "Owner information",
-		longDescription: "Show owner information",
-		category: "information",
-		guide: "{pn}"
-	},
+  config: {
+    name: "owner",
+    version: "1.0.1",
+    author: "Mehedi",
+    role: 0,
+    shortDescription: "Owner information with image",
+    category: "Information",
+    guide: {
+      en: "owner"
+    }
+  },
 
-	onStart: async function ({ api, event }) {
+  onStart: async function ({ api, event }) {
 
-		const uptime = process.uptime();
-		const hours = Math.floor(uptime / 3600);
-		const minutes = Math.floor((uptime % 3600) / 60);
-		const seconds = Math.floor(uptime % 60);
+    const ownerText = `
+╭━━━━ 👑 Oᴡɴᴇʀ Iɴғᴏ ━━━━╮
 
-		const totalMem = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-		const freeMem = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
+🏷 Nᴀᴍᴇ
+└─ MOJAHAID 🤖 👑
 
-		const msg = `
-╔═════════╗
-  𝗢𝗪𝗡𝗘𝗥 𝗣𝗥𝗢𝗙𝗜𝗟𝗘 
-╚═════════╝
-╭──────────⭓
-│💌𝗡𝗮𝗺𝗲 :    亗•𝘔𝘈𝘔𝘜𝘕✿᭄
-│🧸𝗡𝗶𝗰𝗸      :  Vondo
-│🔮 𝗔𝗴𝗲       : 20
-│🖤 𝗦𝘁𝗮𝘁𝘂𝘀   :  Single
-│✡️ 𝗣𝗿𝗼𝗳𝗲𝘀𝘀𝗶𝗼𝗻 :  Student
- | 🚸𝗘𝗱𝘂𝗰𝗮𝘁𝗶𝗼𝗻 :   Inter 2nd Year
-│🔶 𝗟𝗼𝗰𝗮𝘁𝗶𝗼𝗻  :  Khulna
-╰──────────⭓
-╭─────────⭓
- |🆙  ${hours}h ${minutes}m ${seconds}s
- |
- |💾     : ${freeMem}GB / ${totalMem}GB
-╰─────────⭓
-╭──────────⭓
-│💠 WhatsApp
-│🆔  wa.me/01830981279
-╰──────────⭓
+🎀 Nɪᴄᴋ
+└─Obi TO 🎀
+
+🎂 Aɢᴇ
+└─ 20😘
+
+💞 Rᴇʟᴀᴛɪᴏɴ
+└─ ❥۵།🌸𝐏𝐢𝐜𝐜𝐢♡︎R̶i̶n̶シ"🌸⎯⃝🦋
+
+💼 Wᴏʀᴋ
+└─ Job + bodybuilder 😎
+
+🎓 Eᴅᴜᴄᴀᴛɪᴏɴ
+└─ Sᴇᴄʀᴇᴛ 🤫
+
+📍 Lᴏᴄᴀᴛɪᴏɴ
+└─ Tangail 
+
+╰━━━━━ 🔗 Cᴏɴᴛᴀᴄᴛ ━━━━━━╯
+
+📘 Fʙ ➜ Moja haid
+
+💬 Tɢ ➜ secret
+
+📞 Wᴀ ➜ 01607091537
 `;
 
-		const cacheFolder = path.join(__dirname, "cache");
-		const imagePath = path.join(cacheFolder, "owner.jpg");
+    const cacheDir = path.join(__dirname, "cache");
+    const imgPath = path.join(cacheDir, "owner.jpg");
 
-		fs.ensureDirSync(cacheFolder);
+    // Direct image URL
+    const imgLink = "https://i.imgur.com/DzsX8sv.jpeg";
 
-		const imageUrl = "https://i.imgur.com/g0GpgfG.jpeg";
+    try {
+      // Create cache folder
+      await fs.ensureDir(cacheDir);
 
-		request(imageUrl)
-			.pipe(fs.createWriteStream(imagePath))
-			.on("close", () => {
-				api.sendMessage(
-					{
-						body: msg,
-						attachment: fs.createReadStream(imagePath)
-					},
-					event.threadID,
-					() => {
-						if (fs.existsSync(imagePath))
-							fs.unlinkSync(imagePath);
-					},
-					event.messageID
-				);
-			})
-			.on("error", () => {
-				api.sendMessage(msg, event.threadID, event.messageID);
-			});
-	}
+      // Download image
+      await new Promise((resolve, reject) => {
+        const file = fs.createWriteStream(imgPath);
+
+        https.get(imgLink, (response) => {
+
+          if (response.statusCode !== 200) {
+            file.close();
+            fs.unlink(imgPath).catch(() => {});
+            return reject(
+              new Error("Image download failed: HTTP " + response.statusCode)
+            );
+          }
+
+          response.pipe(file);
+
+          file.on("finish", () => {
+            file.close(resolve);
+          });
+
+        }).on("error", (error) => {
+          file.close();
+          fs.unlink(imgPath).catch(() => {});
+          reject(error);
+        });
+      });
+
+      // Send message with image
+      api.sendMessage(
+        {
+          body: ownerText,
+          attachment: fs.createReadStream(imgPath)
+        },
+        event.threadID,
+        (err) => {
+          // Delete cache after sending
+          fs.unlink(imgPath).catch(() => {});
+
+          if (err) {
+            console.log("Send message error:", err);
+          }
+        },
+        event.messageID
+      );
+
+    } catch (error) {
+
+      console.log("Owner command error:", error);
+
+      // If image fails, send text instead of crashing
+      api.sendMessage(
+        ownerText,
+        event.threadID,
+        event.messageID
+      );
+    }
+  }
 };
